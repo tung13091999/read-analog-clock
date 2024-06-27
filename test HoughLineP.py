@@ -11,7 +11,7 @@ cv2.imshow('blurred', blurred)
 dst = cv2.Canny(blurred, 100, 200, None, 3)
 cv2.imshow('Canny', dst)
 
-linesP = cv2.HoughLinesP(dst, 1, np.pi / 180, 25, None, 10, 10)
+linesP = cv2.HoughLinesP(dst, 1, np.pi / 180, 100, None, 100, 10)
 if linesP is not None:
     for points in linesP:
         x1, y1, x2, y2 = points[0]
