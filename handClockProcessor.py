@@ -3,8 +3,13 @@ import numpy as np
 
 
 def preprocessing_img(color_img_path, blur_ksize, canny_threshold1, canny_threshold2):
+    """
+    Returns:
+        [gray_img, canny_edges]
+    """
+
     color_img = cv2.imread(color_img_path)
-    gray_img = cv2.imread(color_img, cv2.IMREAD_GRAYSCALE)
+    gray_img = cv2.imread(color_img_path, cv2.IMREAD_GRAYSCALE)
     gray_img = cv2.GaussianBlur(gray_img, ksize=blur_ksize, sigmaX=0)
     canny_edges = cv2.Canny(gray_img, canny_threshold1, canny_threshold2)
     cv2.imshow('Gray IMG', gray_img)
@@ -13,6 +18,11 @@ def preprocessing_img(color_img_path, blur_ksize, canny_threshold1, canny_thresh
 
 
 def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
+    """
+    Returns:
+        [clock_centre, max_rad]
+    """
+    print(param1)
     circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, dp=dp, minDist=min_dist, param1=param1, param2=param2, minRadius=0, maxRadius=0)
     if circles is None:
         exit('Cannot found any circles. Please check!')
