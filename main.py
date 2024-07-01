@@ -1,17 +1,21 @@
 import cv2
 import numpy as np
-from angleProcessor import get_angle
+from handClockProcessor import get_angle
 
-color_img = cv2.imread('img_1.png')
+
+color_img = cv2.imread('clock2.png')
 # gray_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
-gray_img = cv2.imread('img_1.png', cv2.IMREAD_GRAYSCALE)
+gray_img = cv2.imread('clock2.png', cv2.IMREAD_GRAYSCALE)
 gray_img = cv2.GaussianBlur(gray_img, (5, 5), 0)
+edges = cv2.Canny(gray_img, 100, 150)
+cv2.imshow('Gray IMG', gray_img)
+cv2.imshow('Edges', edges)
+
 
 # Finding centre of clock by HoughCircle
 circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, 1, 10, param1=50, param2=100, minRadius=0, maxRadius=0)
 if circles is None:
     exit('Cannot found any circles. Please check!')
-
 circles = np.uint16(circles)
 print(f'List of found circles : {circles}')
 maxRad = 0
@@ -24,10 +28,9 @@ for circle in circles[0]:
 print(f'Max radius of clock = {maxRad}')
 print(f'Clock centre = {clock_centre}')
 cv2.circle(color_img, clock_centre, maxRad, (255, 0, 255), 3)
+cv2.imshow('Circle', color_img)
 
 # Find Contours
-edges = cv2.Canny(gray_img, 50, 150)
-cv2.imshow('EDGES', edges)
 contours, _ = cv2.findContours(edges.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 cv2.drawContours(image=color_img, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=1)
 
@@ -69,8 +72,8 @@ print(f'Simplified points = {desired_hull_vertices}')
 # Only 3 furthest vertices from centre = sec/min/hour vertices --> Need to sort
 sorted_vertices = sorted(desired_hull_vertices, key=lambda vertex: np.sqrt((clock_centre[0] - vertex[0])**2 + (clock_centre[1] - vertex[1])**2), reverse=True)
 print(f'Sorted vertice = {sorted_vertices}')
-second_hand_vertex = sorted_vertices[0]
-minute_hand_vertex = sorted_vertices[1]
+second_hand_vertex = sorted_vertices[1]
+minute_hand_vertex = sorted_vertices[0]
 hour_hand_vertex = sorted_vertices[2]
 # Draw time_vertices on img
 for i in range(0, 3):
