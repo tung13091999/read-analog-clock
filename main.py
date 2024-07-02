@@ -3,9 +3,9 @@ import numpy as np
 from handClockProcessor import get_angle
 
 
-color_img = cv2.imread('clock2.png')
+color_img = cv2.imread('clock8.png')
 # gray_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
-gray_img = cv2.imread('clock2.png', cv2.IMREAD_GRAYSCALE)
+gray_img = cv2.imread('clock8.png', cv2.IMREAD_GRAYSCALE)
 gray_img = cv2.GaussianBlur(gray_img, (5, 5), 0)
 edges = cv2.Canny(gray_img, 100, 150)
 cv2.imshow('Gray IMG', gray_img)

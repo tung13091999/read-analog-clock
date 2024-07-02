@@ -5,7 +5,7 @@ import numpy as np
 def preprocessing_img(color_img_path, blur_ksize, canny_threshold1, canny_threshold2):
     """
     Returns:
-        [gray_img, canny_edges]
+        [color_img, gray_img, canny_edges]
     """
 
     color_img = cv2.imread(color_img_path)
@@ -14,7 +14,7 @@ def preprocessing_img(color_img_path, blur_ksize, canny_threshold1, canny_thresh
     canny_edges = cv2.Canny(gray_img, canny_threshold1, canny_threshold2)
     cv2.imshow('Gray IMG', gray_img)
     cv2.imshow('Edges', canny_edges)
-    return [gray_img, canny_edges]
+    return [color_img, gray_img, canny_edges]
 
 
 def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
@@ -22,7 +22,6 @@ def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
     Returns:
         [clock_centre, max_rad]
     """
-    print(param1)
     circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, dp=dp, minDist=min_dist, param1=param1, param2=param2, minRadius=0, maxRadius=0)
     if circles is None:
         exit('Cannot found any circles. Please check!')
@@ -43,6 +42,10 @@ def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
 
 
 def find_hand_contour(color_img, canny_edges, clock_centre):
+    """
+    Returns:
+        hand_contour
+    """
     contours, _ = cv2.findContours(canny_edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     cv2.drawContours(image=color_img, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=1)
     # Getting Contours which contain centre point inside it --> pass in shortlist[]
@@ -69,6 +72,10 @@ def find_hand_contour(color_img, canny_edges, clock_centre):
 
 
 def find_hand_vertices(color_img, hand_contour, approx_epsilon, clock_centre):
+    """
+    Returns:
+        [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
+    """
     hand_hull = cv2.convexHull(hand_contour)
     print(f'Hand Convex = {hand_hull}')
     cv2.drawContours(color_img, contours=[hand_hull], contourIdx=-1, color=(0, 0, 255), thickness=2)
@@ -113,6 +120,10 @@ def get_angle(color_img, hand, center):
 
 
 def get_time(color_img, time_hand_vertices, clock_centre):
+    """
+    Returns:
+        [hour_value, minute_value, second_value]
+    """
     second_hand_vertex = time_hand_vertices[2]
     minute_hand_vertex = time_hand_vertices[1]
     hour_hand_vertex = time_hand_vertices[0]
@@ -128,4 +139,3 @@ def main():
 
 if __name__ == main():
     main()
-

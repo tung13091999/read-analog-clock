@@ -1,18 +1,16 @@
-# import tkinter
-#
-# import cv2
-# import numpy as np
+import cv2
 import handClockProcessor as hCP
 from tkinter import Tk, Button, Scale, Label, HORIZONTAL
 from tkinter.filedialog import askopenfilename
 
 img_file_path = ''
-canny_threshold1 = 1
-canny_threshold2 = 1
-hcc_dp = 1
-hcc_min_dist = 1
-hcc_param1 = 1
-hcc_param2 = 1
+canny_threshold1_scale = ...
+canny_threshold2_scale = ...
+hcc_dp_scale = ...
+hcc_min_dist_scale = ...
+hcc_param1_scale = ...
+hcc_param2_scale = ...
+approx_epsilon_scale = ...
 
 
 def select_file():
@@ -20,17 +18,29 @@ def select_file():
     img_file_path = askopenfilename()
 
 
-def detect_circles():
-    gray_img, color_img = hCP.preprocessing_img(color_img_path=img_file_path,
-                                                blur_ksize=(5, 5),
-                                                canny_threshold1=canny_threshold1,
-                                                canny_threshold2=canny_threshold2)
+def detect_time():
+    color_img, gray_img, canny_edges = hCP.preprocessing_img(color_img_path=img_file_path,
+                                                             blur_ksize=(5, 5),
+                                                             canny_threshold1=canny_threshold1_scale.get(),
+                                                             canny_threshold2=canny_threshold2_scale.get())
     clock_centre, max_rad = hCP.find_max_clock_circle(color_img=color_img,
                                                       gray_img=gray_img,
-                                                      dp=hcc_dp,
-                                                      min_dist=hcc_min_dist,
-                                                      param1=hcc_param1,
-                                                      param2=hcc_param2)
+                                                      dp=hcc_dp_scale.get(),
+                                                      min_dist=hcc_min_dist_scale.get(),
+                                                      param1=hcc_param1_scale.get(),
+                                                      param2=hcc_param2_scale.get())
+    hand_contour = hCP.find_hand_contour(color_img=color_img,
+                                         canny_edges=canny_edges,
+                                         clock_centre=clock_centre)
+    time_hand_vertices = hCP.find_hand_vertices(color_img=color_img,
+                                                hand_contour=hand_contour,
+                                                approx_epsilon=approx_epsilon_scale.get(),
+                                                clock_centre=clock_centre)
+    time_value = hCP.get_time(color_img=color_img,
+                              time_hand_vertices=time_hand_vertices,
+                              clock_centre=clock_centre)
+    print(time_value)
+    cv2.imshow('xxx', color_img)
 
 
 def create_tkinter_slider(tkinter_root, label_name, start_val, end_val, default_val, orient_val):
@@ -39,7 +49,7 @@ def create_tkinter_slider(tkinter_root, label_name, start_val, end_val, default_
     scale = Scale(tkinter_root, from_=start_val, to=end_val, orient=orient_val)
     scale.set(default_val)
     scale.pack()
-    return scale.get()
+    return scale
 
 
 def main():
@@ -52,36 +62,38 @@ def main():
     select_button.pack()
 
     # Create slider for Canny threshold1
-    global canny_threshold1
-    canny_threshold1 = create_tkinter_slider(root, 'Canny Threshold1', 0, 255, 100, HORIZONTAL)
+    global canny_threshold1_scale
+    canny_threshold1_scale = create_tkinter_slider(root, 'Canny Threshold1', 0, 255, 100, HORIZONTAL)
 
     # Create slider for Canny threshold2
-    global canny_threshold2
-    canny_threshold2 = create_tkinter_slider(root, 'Canny Threshold2', 0, 255, 150, HORIZONTAL)
+    global canny_threshold2_scale
+    canny_threshold2_scale = create_tkinter_slider(root, 'Canny Threshold2', 0, 255, 150, HORIZONTAL)
 
     # Create slider for Hough Circle dp
-    global hcc_dp
-    hcc_dp = create_tkinter_slider(root, 'Hough CC dp', 1, 10, 1, HORIZONTAL)
+    global hcc_dp_scale
+    hcc_dp_scale = create_tkinter_slider(root, 'Hough CC dp', 1, 10, 1, HORIZONTAL)
 
     # Create slider for Hough Circle minDist
-    global hcc_min_dist
-    hcc_min_dist = create_tkinter_slider(root, 'Hough CC min dist', 10, 100, 10, HORIZONTAL)
+    global hcc_min_dist_scale
+    hcc_min_dist_scale = create_tkinter_slider(root, 'Hough CC min dist', 10, 100, 10, HORIZONTAL)
 
     # Create slider for Hough Circle param1
-    global hcc_param1
-    hcc_param1 = create_tkinter_slider(root, 'Hough CC param1', 0, 255, 50, HORIZONTAL)
+    global hcc_param1_scale
+    hcc_param1_scale = create_tkinter_slider(root, 'Hough CC param1', 0, 255, 50, HORIZONTAL)
 
     # Create slider for Hough Circle param2
-    global hcc_param2
-    hcc_param2 = create_tkinter_slider(root, 'Hough CC param2', 0, 300, 100, HORIZONTAL)
+    global hcc_param2_scale
+    hcc_param2_scale = create_tkinter_slider(root, 'Hough CC param2', 0, 300, 100, HORIZONTAL)
 
-    detect_button = Button(root, text="Tìm vòng tròn", command=detect_circles)
+    # Create slider for approxPolyDP epsilon
+    global approx_epsilon_scale
+    approx_epsilon_scale = create_tkinter_slider(root, 'approxPolyDP epsilon', 0, 300, 100, HORIZONTAL)
+
+    detect_button = Button(root, text="Start detect", command=detect_time)
     detect_button.pack()
     # Run tkinter
     root.mainloop()
 
 
-if __name__ == main():
+if __name__ == '__main__':
     main()
-
-
