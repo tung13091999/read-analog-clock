@@ -12,8 +12,8 @@ def preprocessing_img(color_img_path, blur_ksize, canny_threshold1, canny_thresh
     gray_img = cv2.imread(color_img_path, cv2.IMREAD_GRAYSCALE)
     gray_img = cv2.GaussianBlur(gray_img, ksize=blur_ksize, sigmaX=0)
     canny_edges = cv2.Canny(gray_img, canny_threshold1, canny_threshold2)
-    cv2.imshow('Gray IMG', gray_img)
-    cv2.imshow('Edges', canny_edges)
+    # cv2.imshow('Gray IMG', gray_img)
+    # cv2.imshow('Edges', canny_edges)
     return [color_img, gray_img, canny_edges]
 
 
@@ -37,7 +37,7 @@ def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
     print(f'Max radius of clock = {max_rad}')
     print(f'Clock centre = {clock_centre}')
     cv2.circle(color_img, clock_centre, max_rad, (255, 0, 255), 3)
-    cv2.imshow('Circle', color_img)
+    # cv2.imshow('Circle', color_img)
     return [clock_centre, max_rad]
 
 
@@ -79,24 +79,34 @@ def find_hand_vertices(color_img, hand_contour, approx_epsilon, clock_centre):
     hand_hull = cv2.convexHull(hand_contour)
     print(f'Hand Convex = {hand_hull}')
     cv2.drawContours(color_img, contours=[hand_hull], contourIdx=-1, color=(0, 0, 255), thickness=2)
+
     # Find the Vertices of Convex Hull ~ Vertices of Hand Clock
     # Because Convex Hull has many bad vertices, so we need to clear them to get desired vertices
     # Do it by approxPolyDP method
     desired_hull_vertices = cv2.approxPolyDP(hand_hull, epsilon=approx_epsilon, closed=True)
-    desired_hull_vertices = desired_hull_vertices.squeeze().tolist()
     print(f'Simplified points = {desired_hull_vertices}')
+    for i in desired_hull_vertices:
+        cv2.circle(color_img, center=i[0], radius=10, color=(255, 100, 100), thickness=-1)
+        print(f'{i}')
+
     # Now, handHull = quadrilateral = polygon has 4 vertices
     # Only 3 furthest vertices from centre = sec/min/hour vertices --> Need to sort
     sorted_vertices = sorted(desired_hull_vertices, key=lambda vertex: np.sqrt(
-        (clock_centre[0] - vertex[0]) ** 2 + (clock_centre[1] - vertex[1]) ** 2), reverse=True)
+        (clock_centre[0] - vertex[0][0]) ** 2 + (clock_centre[1] - vertex[0][1]) ** 2), reverse=True)
     print(f'Sorted vertice = {sorted_vertices}')
-    second_hand_vertex = sorted_vertices[1]
-    minute_hand_vertex = sorted_vertices[0]
-    hour_hand_vertex = sorted_vertices[2]
-    # Draw time_vertices on img
-    for i in range(0, 3):
-        cv2.circle(color_img, center=sorted_vertices[i], radius=5, color=(255, 0, 255), thickness=-1)
-    return [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
+
+    # second_hand_vertex = ...
+    # minute_hand_vertex = ...
+    # hour_hand_vertex = ...
+    #
+    # try:
+    #     second_hand_vertex = sorted_vertices[1][0]
+    #     minute_hand_vertex = sorted_vertices[0][0]
+    #     hour_hand_vertex = sorted_vertices[2][0]
+    # except NameError:
+    #     print('xxx')
+    #
+    # return [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
 
 
 def get_angle(color_img, hand, center):

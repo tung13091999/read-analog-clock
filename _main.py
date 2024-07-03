@@ -1,7 +1,7 @@
-import cv2
 import handClockProcessor as hCP
 from tkinter import Tk, Button, Scale, Label, HORIZONTAL
 from tkinter.filedialog import askopenfilename
+import displayImages
 
 img_file_path = ''
 canny_threshold1_scale = ...
@@ -19,28 +19,39 @@ def select_file():
 
 
 def detect_time():
+    color_type = displayImages.ColorType
+    display = displayImages.ImageDisplay(fig_size=(10, 8))
+
     color_img, gray_img, canny_edges = hCP.preprocessing_img(color_img_path=img_file_path,
                                                              blur_ksize=(5, 5),
                                                              canny_threshold1=canny_threshold1_scale.get(),
                                                              canny_threshold2=canny_threshold2_scale.get())
+    display.add_img(color_type.GRAY, canny_edges, 221, 'Canny edges IMG')
+
     clock_centre, max_rad = hCP.find_max_clock_circle(color_img=color_img,
                                                       gray_img=gray_img,
                                                       dp=hcc_dp_scale.get(),
                                                       min_dist=hcc_min_dist_scale.get(),
                                                       param1=hcc_param1_scale.get(),
                                                       param2=hcc_param2_scale.get())
+    display.add_img(color_type.BGR, color_img, 222, 'Img with Max Circle')
+
     hand_contour = hCP.find_hand_contour(color_img=color_img,
                                          canny_edges=canny_edges,
                                          clock_centre=clock_centre)
+    display.add_img(color_type.BGR, color_img, 223, 'Img with Hand Contour')
+
     time_hand_vertices = hCP.find_hand_vertices(color_img=color_img,
                                                 hand_contour=hand_contour,
                                                 approx_epsilon=approx_epsilon_scale.get(),
                                                 clock_centre=clock_centre)
-    time_value = hCP.get_time(color_img=color_img,
-                              time_hand_vertices=time_hand_vertices,
-                              clock_centre=clock_centre)
-    print(time_value)
-    cv2.imshow('xxx', color_img)
+    # time_value = hCP.get_time(color_img=color_img,
+    #                           time_hand_vertices=time_hand_vertices,
+    #                           clock_centre=clock_centre)
+    # print(time_value)
+    display.add_img(color_type.BGR, color_img, 224, 'Handled IMG')
+    display.show()
+    # print(time_value)
 
 
 def create_tkinter_slider(tkinter_root, label_name, start_val, end_val, default_val, orient_val):
