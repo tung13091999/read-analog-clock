@@ -9,9 +9,14 @@ def preprocessing_img(color_img_path, blur_ksize, canny_threshold1, canny_thresh
     """
 
     color_img = cv2.imread(color_img_path)
-    gray_img = cv2.imread(color_img_path, cv2.IMREAD_GRAYSCALE)
+
+    # gray_img = cv2.imread(color_img_path, cv2.IMREAD_GRAYSCALE)
+
+    gray_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
+
     gray_img = cv2.GaussianBlur(gray_img, ksize=blur_ksize, sigmaX=0)
     canny_edges = cv2.Canny(gray_img, canny_threshold1, canny_threshold2)
+
     # cv2.imshow('Gray IMG', gray_img)
     # cv2.imshow('Edges', canny_edges)
     return [color_img, gray_img, canny_edges]
@@ -22,9 +27,10 @@ def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
     Returns:
         [clock_centre, max_rad]
     """
-    circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, dp=dp, minDist=min_dist, param1=param1, param2=param2, minRadius=0, maxRadius=0)
+    circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, dp=dp, minDist=min_dist, param1=param1, param2=param2,
+                               minRadius=0, maxRadius=0)
     if circles is None:
-        exit('Cannot found any circles. Please check!')
+        print('Cannot found any circles. Please check!')
     circles = np.uint16(circles)
     print(f'List of found circles : {circles}')
     max_rad = 0
@@ -87,7 +93,6 @@ def find_hand_vertices(color_img, hand_contour, approx_epsilon, clock_centre):
     print(f'Simplified points = {desired_hull_vertices}')
     for i in desired_hull_vertices:
         cv2.circle(color_img, center=i[0], radius=10, color=(255, 100, 100), thickness=-1)
-        print(f'{i}')
 
     # Now, handHull = quadrilateral = polygon has 4 vertices
     # Only 3 furthest vertices from centre = sec/min/hour vertices --> Need to sort
@@ -95,18 +100,18 @@ def find_hand_vertices(color_img, hand_contour, approx_epsilon, clock_centre):
         (clock_centre[0] - vertex[0][0]) ** 2 + (clock_centre[1] - vertex[0][1]) ** 2), reverse=True)
     print(f'Sorted vertice = {sorted_vertices}')
 
-    # second_hand_vertex = ...
-    # minute_hand_vertex = ...
-    # hour_hand_vertex = ...
-    #
-    # try:
-    #     second_hand_vertex = sorted_vertices[1][0]
-    #     minute_hand_vertex = sorted_vertices[0][0]
-    #     hour_hand_vertex = sorted_vertices[2][0]
-    # except NameError:
-    #     print('xxx')
-    #
-    # return [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
+    second_hand_vertex = ...
+    minute_hand_vertex = ...
+    hour_hand_vertex = ...
+
+    try:
+        second_hand_vertex = sorted_vertices[1][0]
+        minute_hand_vertex = sorted_vertices[0][0]
+        hour_hand_vertex = sorted_vertices[2][0]
+    except NameError:
+        print('xxx')
+
+    return [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
 
 
 def get_angle(color_img, hand, center):
@@ -119,14 +124,14 @@ def get_angle(color_img, hand, center):
     dy = y_h - y_c
     angle = 0
     if dx > 0 > dy:
-        angle = np.pi/2 - np.arctan(abs(dy / dx))
+        angle = np.pi / 2 - np.arctan(abs(dy / dx))
     elif dx > 0 and dy > 0:
-        angle = np.pi/2 + np.arctan(abs(dy / dx))
+        angle = np.pi / 2 + np.arctan(abs(dy / dx))
     elif dx < 0 < dy:
-        angle = 3*np.pi/2 - np.arctan(abs(dy / dx))
+        angle = 3 * np.pi / 2 - np.arctan(abs(dy / dx))
     elif dx < 0 and dy < 0:
         angle = 3 * np.pi / 2 + np.arctan(abs(dy / dx))
-    return angle*180/np.pi
+    return angle * 180 / np.pi
 
 
 def get_time(color_img, time_hand_vertices, clock_centre):

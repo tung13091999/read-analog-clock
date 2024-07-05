@@ -34,24 +34,23 @@ def detect_time():
                                                       min_dist=hcc_min_dist_scale.get(),
                                                       param1=hcc_param1_scale.get(),
                                                       param2=hcc_param2_scale.get())
-    display.add_img(color_type.BGR, color_img, 222, 'Img with Max Circle')
-
-    hand_contour = hCP.find_hand_contour(color_img=color_img,
-                                         canny_edges=canny_edges,
-                                         clock_centre=clock_centre)
-    display.add_img(color_type.BGR, color_img, 223, 'Img with Hand Contour')
-
-    time_hand_vertices = hCP.find_hand_vertices(color_img=color_img,
-                                                hand_contour=hand_contour,
-                                                approx_epsilon=approx_epsilon_scale.get(),
-                                                clock_centre=clock_centre)
+    # display.add_img(color_type.BGR, color_img, 222, 'Img with Max Circle')
+    #
+    # hand_contour = hCP.find_hand_contour(color_img=color_img,
+    #                                      canny_edges=canny_edges,
+    #                                      clock_centre=clock_centre)
+    # display.add_img(color_type.BGR, color_img, 223, 'Img with Hand Contour')
+    #
+    # time_hand_vertices = hCP.find_hand_vertices(color_img=color_img,
+    #                                             hand_contour=hand_contour,
+    #                                             approx_epsilon=approx_epsilon_scale.get(),
+    #                                             clock_centre=clock_centre)
     # time_value = hCP.get_time(color_img=color_img,
     #                           time_hand_vertices=time_hand_vertices,
     #                           clock_centre=clock_centre)
     # print(time_value)
     display.add_img(color_type.BGR, color_img, 224, 'Handled IMG')
     display.show()
-    # print(time_value)
 
 
 def create_tkinter_slider(tkinter_root, label_name, start_val, end_val, default_val, orient_val):
@@ -82,7 +81,7 @@ def main():
 
     # Create slider for Hough Circle dp
     global hcc_dp_scale
-    hcc_dp_scale = create_tkinter_slider(root, 'Hough CC dp', 1, 10, 1, HORIZONTAL)
+    hcc_dp_scale = create_tkinter_slider(root, 'Hough CC dp', 1, 15, 1, HORIZONTAL)
 
     # Create slider for Hough Circle minDist
     global hcc_min_dist_scale
@@ -98,7 +97,7 @@ def main():
 
     # Create slider for approxPolyDP epsilon
     global approx_epsilon_scale
-    approx_epsilon_scale = create_tkinter_slider(root, 'approxPolyDP epsilon', 0, 300, 100, HORIZONTAL)
+    approx_epsilon_scale = create_tkinter_slider(root, 'approxPolyDP epsilon', 0, 100, 10, HORIZONTAL)
 
     detect_button = Button(root, text="Start detect", command=detect_time)
     detect_button.pack()
