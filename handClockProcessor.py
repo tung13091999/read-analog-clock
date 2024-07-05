@@ -2,19 +2,22 @@ import cv2
 import numpy as np
 
 
-def preprocessing_img(color_img_path, blur_ksize, canny_threshold1, canny_threshold2):
+def preprocessing_img(color_img_path, blur_ksize, thresh_value, thresh_max_value):
     """
     Returns:
-        [color_img, gray_img, canny_edges]
+        [color_img, gray_img, thresh_img]
     """
 
     color_img = cv2.imread(color_img_path)
-    gray_img = cv2.imread(color_img_path, cv2.IMREAD_GRAYSCALE)
+
+    # gray_img = cv2.imread(color_img_path, cv2.IMREAD_GRAYSCALE)
+
+    gray_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
+
     gray_img = cv2.GaussianBlur(gray_img, ksize=blur_ksize, sigmaX=0)
-    canny_edges = cv2.Canny(gray_img, canny_threshold1, canny_threshold2)
-    # cv2.imshow('Gray IMG', gray_img)
-    # cv2.imshow('Edges', canny_edges)
-    return [color_img, gray_img, canny_edges]
+    _, thresh_img = cv2.threshold(gray_img, thresh_value, thresh_max_value, cv2.THRESH_BINARY)
+    # canny_edges = cv2.Canny(gray_img, canny_threshold1, canny_threshold2)
+    return [color_img, gray_img, thresh_img]
 
 
 def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
@@ -22,9 +25,10 @@ def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
     Returns:
         [clock_centre, max_rad]
     """
-    circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, dp=dp, minDist=min_dist, param1=param1, param2=param2, minRadius=0, maxRadius=0)
+    circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, dp=dp, minDist=min_dist, param1=param1, param2=param2,
+                               minRadius=0, maxRadius=0)
     if circles is None:
-        exit('Cannot found any circles. Please check!')
+        print('Cannot found any circles. Please check!')
     circles = np.uint16(circles)
     print(f'List of found circles : {circles}')
     max_rad = 0
@@ -41,13 +45,50 @@ def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
     return [clock_centre, max_rad]
 
 
-def find_hand_contour(color_img, canny_edges, clock_centre):
+def find_contours(color_img, thresh_img):
+    """
+    Returns:
+        [color_img, contours]
+    """
+    contours, _ = cv2.findContours(thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    cv2.drawContours(image=color_img, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=3)
+    return [color_img, contours]
+
+
+def find_max_circle(color_img, contours):
+    """
+    Returns:
+        [clock_centre, max_rad]
+    """
+    max_x = 0
+    max_y = 0
+    max_width = 0
+    max_height = 0
+    max_bounding_rect_area = 0
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        if w*h > max_bounding_rect_area:
+            max_bounding_rect_area = w*h
+            max_width = w
+            max_height = h
+            max_x = x
+            max_y = y
+    print(f'Max bounding width = {max_width}')
+    print(f'Max bounding height = {max_height}')
+
+    cv2.rectangle(color_img, pt1=(max_x, max_y), pt2=(max_x + max_width, max_y + max_height), color=(0, 0, 0), thickness=3)
+
+    clock_centre = (int(max_x + max_width/2), int(max_y + max_height/2))
+    cv2.circle(color_img, center=clock_centre, radius=10, color=(0, 0, 255), thickness=-1)
+    max_rad = int((max_height + max_width)/4)
+    return [clock_centre, max_rad]
+
+
+def find_hand_contour(color_img, contours, clock_centre):
     """
     Returns:
         hand_contour
     """
-    contours, _ = cv2.findContours(canny_edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    cv2.drawContours(image=color_img, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=1)
     # Getting Contours which contain centre point inside it --> pass in shortlist[]
     contour_shortlist = []
     print("**Bounding rect**")
@@ -87,7 +128,6 @@ def find_hand_vertices(color_img, hand_contour, approx_epsilon, clock_centre):
     print(f'Simplified points = {desired_hull_vertices}')
     for i in desired_hull_vertices:
         cv2.circle(color_img, center=i[0], radius=10, color=(255, 100, 100), thickness=-1)
-        print(f'{i}')
 
     # Now, handHull = quadrilateral = polygon has 4 vertices
     # Only 3 furthest vertices from centre = sec/min/hour vertices --> Need to sort
@@ -95,18 +135,18 @@ def find_hand_vertices(color_img, hand_contour, approx_epsilon, clock_centre):
         (clock_centre[0] - vertex[0][0]) ** 2 + (clock_centre[1] - vertex[0][1]) ** 2), reverse=True)
     print(f'Sorted vertice = {sorted_vertices}')
 
-    # second_hand_vertex = ...
-    # minute_hand_vertex = ...
-    # hour_hand_vertex = ...
-    #
-    # try:
-    #     second_hand_vertex = sorted_vertices[1][0]
-    #     minute_hand_vertex = sorted_vertices[0][0]
-    #     hour_hand_vertex = sorted_vertices[2][0]
-    # except NameError:
-    #     print('xxx')
-    #
-    # return [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
+    second_hand_vertex = ...
+    minute_hand_vertex = ...
+    hour_hand_vertex = ...
+
+    try:
+        second_hand_vertex = sorted_vertices[1][0]
+        minute_hand_vertex = sorted_vertices[0][0]
+        hour_hand_vertex = sorted_vertices[2][0]
+    except NameError:
+        print('xxx')
+
+    return [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
 
 
 def get_angle(color_img, hand, center):
@@ -119,14 +159,14 @@ def get_angle(color_img, hand, center):
     dy = y_h - y_c
     angle = 0
     if dx > 0 > dy:
-        angle = np.pi/2 - np.arctan(abs(dy / dx))
+        angle = np.pi / 2 - np.arctan(abs(dy / dx))
     elif dx > 0 and dy > 0:
-        angle = np.pi/2 + np.arctan(abs(dy / dx))
+        angle = np.pi / 2 + np.arctan(abs(dy / dx))
     elif dx < 0 < dy:
-        angle = 3*np.pi/2 - np.arctan(abs(dy / dx))
+        angle = 3 * np.pi / 2 - np.arctan(abs(dy / dx))
     elif dx < 0 and dy < 0:
         angle = 3 * np.pi / 2 + np.arctan(abs(dy / dx))
-    return angle*180/np.pi
+    return angle * 180 / np.pi
 
 
 def get_time(color_img, time_hand_vertices, clock_centre):
