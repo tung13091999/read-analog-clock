@@ -177,9 +177,22 @@ def get_time(color_img, time_hand_vertices, clock_centre):
     second_hand_vertex = time_hand_vertices[2]
     minute_hand_vertex = time_hand_vertices[1]
     hour_hand_vertex = time_hand_vertices[0]
-    second_value = int(get_angle(color_img, second_hand_vertex, clock_centre) * 60 / 360)
-    minute_value = int(get_angle(color_img, minute_hand_vertex, clock_centre) * 60 / 360)
-    hour_value = int(get_angle(color_img, hour_hand_vertex, clock_centre) * 12 / 360)
+
+    second_angle = get_angle(color_img, second_hand_vertex, clock_centre)
+    minute_angle = get_angle(color_img, minute_hand_vertex, clock_centre)
+    hour_angle = get_angle(color_img, hour_hand_vertex, clock_centre)
+
+    print(f'second angle = {second_angle}')
+    print(f'minute angle = {minute_angle}')
+    print(f'hour angle = {hour_angle}')
+
+    second_value = int(second_angle * 60 / 360)
+    minute_value = int(minute_angle * 60 / 360)
+    hour_value = int(hour_angle * 12 / 360)
+
+    if 50 <= minute_value <= 59 and hour_angle < (hour_value + 1)*30 - 10:
+        hour_value = hour_value - 1
+
     return [hour_value, minute_value, second_value]
 
 
