@@ -6,11 +6,13 @@ import displayImages
 img_file_path = ''
 thresh_value_scale = ...
 thresh_max_scale = ...
-hcc_dp_scale = ...
-hcc_min_dist_scale = ...
-hcc_param1_scale = ...
-hcc_param2_scale = ...
-approx_epsilon_scale = ...
+# hcc_dp_scale = ...
+# hcc_min_dist_scale = ...
+# hcc_param1_scale = ...
+# hcc_param2_scale = ...
+approx_epsilon_scale_1 = ...
+approx_epsilon_scale_2 = ...
+min_hand_length_scale = ...
 
 
 def select_file():
@@ -22,13 +24,15 @@ def detect_time():
     color_type = displayImages.ColorType
     display = displayImages.ImageDisplay(fig_size=(10, 8))
 
-    color_img, gray_img, thresh_img = hCP.preprocessing_img(color_img_path=img_file_path,
-                                                            blur_ksize=(5, 5),
-                                                            thresh_value=thresh_value_scale.get(),
-                                                            thresh_max_value=thresh_max_scale.get())
-    display.add_img(color_type.GRAY, thresh_img, 221, 'Thresh IMG')
+    color_img, gray_img, thresh_img, dilation_img = hCP.preprocessing_img(color_img_path=img_file_path,
+                                                                          blur_ksize=(5, 5),
+                                                                          thresh_value=thresh_value_scale.get(),
+                                                                          thresh_max_value=thresh_max_scale.get())
+    display.add_img(color_type.GRAY, thresh_img, 231, 'Thresh IMG')
+    display.add_img(color_type.GRAY, dilation_img, 232, 'Dilation IMG')
 
-    color_img, contours = hCP.find_contours(color_img=color_img, thresh_img=thresh_img)
+    color_img, thresh_contours = hCP.find_contours(color_img=color_img, binary_img=thresh_img)
+    color_img, dilation_contours = hCP.find_contours(color_img=color_img, binary_img=dilation_img)
     # clock_centre, max_rad = hCP.find_max_clock_circle(color_img=color_img,
     #                                                   gray_img=gray_img,
     #                                                   dp=hcc_dp_scale.get(),
@@ -36,23 +40,46 @@ def detect_time():
     #                                                   param1=hcc_param1_scale.get(),
     #                                                   param2=hcc_param2_scale.get())
 
-    clock_centre, max_rad = hCP.find_max_circle(color_img=color_img, contours=contours)
-    display.add_img(color_type.BGR, color_img, 222, 'Img with Max Circle')
+    clock_centre, max_rad = hCP.find_max_circle(color_img=color_img, contours=thresh_contours)
+    display.add_img(color_type.BGR, color_img, 233, 'Img with Max Circle')
 
-    hand_contour = hCP.find_hand_contour(color_img=color_img,
-                                         contours=contours,
-                                         clock_centre=clock_centre)
-    display.add_img(color_type.BGR, color_img, 223, 'Img with Hand Contour')
+    min_sec_hand_contour = hCP.find_hand_contour(color_img=color_img,
+                                                 contours=thresh_contours,
+                                                 clock_centre=clock_centre)
+    hour_min_hand_contour = hCP.find_hand_contour(color_img=color_img,
+                                                  contours=dilation_contours,
+                                                  clock_centre=clock_centre)
+    display.add_img(color_type.BGR, color_img, 234, 'Img with Hand Contour')
 
-    time_hand_vertices = hCP.find_hand_vertices(color_img=color_img,
-                                                hand_contour=hand_contour,
-                                                approx_epsilon=approx_epsilon_scale.get(),
-                                                clock_centre=clock_centre)
+    possible_hour_min_hand_vertices = hCP.find_possible_hand_vertices(color_img=color_img,
+                                                                      hand_contour=hour_min_hand_contour,
+                                                                      approx_epsilon=approx_epsilon_scale_1.get(),
+                                                                      clock_centre=clock_centre,
+                                                                      min_hand_length=min_hand_length_scale.get())
+    display.add_img(color_type.BGR, color_img, 235, 'Hour-Min Handled IMG')
+    possible_min_sec_hand_vertices = hCP.find_possible_hand_vertices(color_img=color_img,
+                                                                     hand_contour=min_sec_hand_contour,
+                                                                     approx_epsilon=approx_epsilon_scale_1.get(),
+                                                                     clock_centre=clock_centre,
+                                                                     min_hand_length=min_hand_length_scale.get())
+
+    print(f'possible min and sec vertices = {possible_min_sec_hand_vertices}')
+    print(f'possible hour and min vertices = {possible_hour_min_hand_vertices}')
+
+    second_hand_vertex = ...
+    hour_hand_vertex = ...
+
+    minute_hand_vertex = possible_hour_min_hand_vertices[0][0]
+    second_hand_vertex = possible_min_sec_hand_vertices[1][0]
+    hour_hand_vertex = possible_hour_min_hand_vertices[1][0]
+
+    time_hand_vertices = [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
+    print(f'time_hand_vertices = {time_hand_vertices}')
     time_value = hCP.get_time(color_img=color_img,
                               time_hand_vertices=time_hand_vertices,
                               clock_centre=clock_centre)
     print(time_value)
-    display.add_img(color_type.BGR, color_img, 224, 'Handled IMG')
+    display.add_img(color_type.BGR, color_img, 236, 'Handled IMG')
     display.show()
 
 
@@ -76,31 +103,38 @@ def main():
 
     # Create slider for Canny threshold1
     global thresh_value_scale
-    thresh_value_scale = create_tkinter_slider(root, 'Thresh value', 0, 255, 150, HORIZONTAL)
+    thresh_value_scale = create_tkinter_slider(root, 'Thresh value', 0, 255, 120, HORIZONTAL)
 
     # Create slider for Canny threshold2
     global thresh_max_scale
     thresh_max_scale = create_tkinter_slider(root, 'Thresh max value', 0, 255, 255, HORIZONTAL)
 
-    # Create slider for Hough Circle dp
-    global hcc_dp_scale
-    hcc_dp_scale = create_tkinter_slider(root, 'Hough CC dp', 1, 15, 1, HORIZONTAL)
-
-    # Create slider for Hough Circle minDist
-    global hcc_min_dist_scale
-    hcc_min_dist_scale = create_tkinter_slider(root, 'Hough CC min dist', 10, 100, 10, HORIZONTAL)
-
-    # Create slider for Hough Circle param1
-    global hcc_param1_scale
-    hcc_param1_scale = create_tkinter_slider(root, 'Hough CC param1', 0, 255, 50, HORIZONTAL)
-
-    # Create slider for Hough Circle param2
-    global hcc_param2_scale
-    hcc_param2_scale = create_tkinter_slider(root, 'Hough CC param2', 0, 300, 100, HORIZONTAL)
+    # # Create slider for Hough Circle dp
+    # global hcc_dp_scale
+    # hcc_dp_scale = create_tkinter_slider(root, 'Hough CC dp', 1, 15, 1, HORIZONTAL)
+    #
+    # # Create slider for Hough Circle minDist
+    # global hcc_min_dist_scale
+    # hcc_min_dist_scale = create_tkinter_slider(root, 'Hough CC min dist', 10, 100, 10, HORIZONTAL)
+    #
+    # # Create slider for Hough Circle param1
+    # global hcc_param1_scale
+    # hcc_param1_scale = create_tkinter_slider(root, 'Hough CC param1', 0, 255, 50, HORIZONTAL)
+    #
+    # # Create slider for Hough Circle param2
+    # global hcc_param2_scale
+    # hcc_param2_scale = create_tkinter_slider(root, 'Hough CC param2', 0, 300, 100, HORIZONTAL)
 
     # Create slider for approxPolyDP epsilon
-    global approx_epsilon_scale
-    approx_epsilon_scale = create_tkinter_slider(root, 'approxPolyDP epsilon', 0, 100, 8, HORIZONTAL)
+    global approx_epsilon_scale_1
+    approx_epsilon_scale_1 = create_tkinter_slider(root, 'approxPolyDP epsilon 1', 0, 100, 8, HORIZONTAL)
+
+    # Create slider for approxPolyDP epsilon
+    global approx_epsilon_scale_2
+    approx_epsilon_scale_2 = create_tkinter_slider(root, 'approxPolyDP epsilon 2', 0, 100, 8, HORIZONTAL)
+
+    global min_hand_length_scale
+    min_hand_length_scale = create_tkinter_slider(root, 'Min hand length', 0, 200, 50, HORIZONTAL)
 
     detect_button = Button(root, text="Start detect", command=detect_time)
     detect_button.pack()
