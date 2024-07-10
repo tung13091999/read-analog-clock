@@ -2,14 +2,11 @@ import handClockProcessor as hCP
 from tkinter import Tk, Button, Scale, Label, HORIZONTAL
 from tkinter.filedialog import askopenfilename
 import displayImages
+import numpy as np
 
 img_file_path = ''
 thresh_value_scale = ...
 thresh_max_scale = ...
-# hcc_dp_scale = ...
-# hcc_min_dist_scale = ...
-# hcc_param1_scale = ...
-# hcc_param2_scale = ...
 approx_epsilon_scale_1 = ...
 approx_epsilon_scale_2 = ...
 min_hand_length_scale = ...
@@ -33,12 +30,6 @@ def detect_time():
 
     color_img, thresh_contours = hCP.find_contours(color_img=color_img, binary_img=thresh_img)
     color_img, dilation_contours = hCP.find_contours(color_img=color_img, binary_img=dilation_img)
-    # clock_centre, max_rad = hCP.find_max_clock_circle(color_img=color_img,
-    #                                                   gray_img=gray_img,
-    #                                                   dp=hcc_dp_scale.get(),
-    #                                                   min_dist=hcc_min_dist_scale.get(),
-    #                                                   param1=hcc_param1_scale.get(),
-    #                                                   param2=hcc_param2_scale.get())
 
     clock_centre, max_rad = hCP.find_max_circle(color_img=color_img, contours=thresh_contours)
     display.add_img(color_type.BGR, color_img, 233, 'Img with Max Circle')
@@ -70,8 +61,20 @@ def detect_time():
     hour_hand_vertex = ...
 
     minute_hand_vertex = possible_hour_min_hand_vertices[0][0]
-    second_hand_vertex = possible_min_sec_hand_vertices[1][0]
-    hour_hand_vertex = possible_hour_min_hand_vertices[1][0]
+
+    # Exception1: 3 hands overlapped each other
+    if len(possible_min_sec_hand_vertices) > 1:
+        second_hand_vertex = possible_min_sec_hand_vertices[1][0]
+        hour_hand_vertex = possible_hour_min_hand_vertices[1][0]
+    elif len(possible_min_sec_hand_vertices) == 1:
+        second_hand_vertex = minute_hand_vertex
+        hour_hand_vertex = minute_hand_vertex
+
+    # Exception2: second hand overlaps minute hand
+    sec_hand_length = np.sqrt((clock_centre[0] - second_hand_vertex[0]) ** 2 + (clock_centre[1] - second_hand_vertex[1]) ** 2)
+    hour_hand_length = np.sqrt((clock_centre[0] - hour_hand_vertex[0]) ** 2 + (clock_centre[1] - hour_hand_vertex[1]) ** 2)
+    if abs(sec_hand_length - hour_hand_length) < 10:
+        second_hand_vertex = minute_hand_vertex
 
     time_hand_vertices = [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
     print(f'time_hand_vertices = {time_hand_vertices}')
@@ -108,22 +111,6 @@ def main():
     # Create slider for Canny threshold2
     global thresh_max_scale
     thresh_max_scale = create_tkinter_slider(root, 'Thresh max value', 0, 255, 255, HORIZONTAL)
-
-    # # Create slider for Hough Circle dp
-    # global hcc_dp_scale
-    # hcc_dp_scale = create_tkinter_slider(root, 'Hough CC dp', 1, 15, 1, HORIZONTAL)
-    #
-    # # Create slider for Hough Circle minDist
-    # global hcc_min_dist_scale
-    # hcc_min_dist_scale = create_tkinter_slider(root, 'Hough CC min dist', 10, 100, 10, HORIZONTAL)
-    #
-    # # Create slider for Hough Circle param1
-    # global hcc_param1_scale
-    # hcc_param1_scale = create_tkinter_slider(root, 'Hough CC param1', 0, 255, 50, HORIZONTAL)
-    #
-    # # Create slider for Hough Circle param2
-    # global hcc_param2_scale
-    # hcc_param2_scale = create_tkinter_slider(root, 'Hough CC param2', 0, 300, 100, HORIZONTAL)
 
     # Create slider for approxPolyDP epsilon
     global approx_epsilon_scale_1

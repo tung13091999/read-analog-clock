@@ -23,7 +23,7 @@ def preprocessing_img(color_img_path, blur_ksize, thresh_value, thresh_max_value
     return [color_img, gray_img, thresh_img, dilation_img]
 
 
-def find_max_clock_circle(color_img, gray_img, dp, min_dist, param1, param2):
+def find_max_hough_circle(color_img, gray_img, dp, min_dist, param1, param2):
     """
     Returns:
         [clock_centre, max_rad]
@@ -112,7 +112,7 @@ def find_hand_contour(color_img, contours, clock_centre):
         elif contour_min_area > cv2.contourArea(contour):
             contour_min_area = cv2.contourArea(contour)
             hand_contour = contour
-    print(f'Hand contour = {hand_contour}')
+    # print(f'Hand contour = {hand_contour}')
     cv2.drawContours(color_img, contours=hand_contour, contourIdx=-1, color=(255, 0, 0), thickness=2)
     return hand_contour
 
@@ -149,19 +149,6 @@ def find_possible_hand_vertices(color_img, hand_contour, approx_epsilon, clock_c
             possible_vertices.append(i)
     print(f'Possible vertices = {possible_vertices}')
     return possible_vertices
-
-    # second_hand_vertex = ...
-    # minute_hand_vertex = ...
-    # hour_hand_vertex = ...
-    #
-    # try:
-    #     second_hand_vertex = sorted_vertices[1][0]
-    #     minute_hand_vertex = sorted_vertices[0][0]
-    #     hour_hand_vertex = sorted_vertices[2][0]
-    # except NameError:
-    #     print('xxx')
-    #
-    # return [hour_hand_vertex, minute_hand_vertex, second_hand_vertex]
 
 
 def get_angle(color_img, hand, center):
