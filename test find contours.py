@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-img = cv2.imread('clock2.png', 1)
+img = cv2.imread('08h55m00.png', 1)
 temp = img.copy()
 temp2 = img.copy()
 img_grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

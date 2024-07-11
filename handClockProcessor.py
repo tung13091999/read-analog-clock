@@ -53,7 +53,7 @@ def find_contours(color_img, binary_img):
     Returns:
         [color_img, contours]
     """
-    contours, _ = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(255-binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     cv2.drawContours(image=color_img, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=3)
     return [color_img, contours]
 

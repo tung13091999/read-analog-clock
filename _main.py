@@ -106,7 +106,7 @@ def main():
 
     # Create slider for Canny threshold1
     global thresh_value_scale
-    thresh_value_scale = create_tkinter_slider(root, 'Thresh value', 0, 255, 120, HORIZONTAL)
+    thresh_value_scale = create_tkinter_slider(root, 'Thresh value', 0, 255, 150, HORIZONTAL)
 
     # Create slider for Canny threshold2
     global thresh_max_scale
