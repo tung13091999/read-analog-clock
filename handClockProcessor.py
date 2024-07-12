@@ -1,8 +1,10 @@
+import string
+
 import cv2
 import numpy as np
 
 
-def preprocessing_img(color_img_path, blur_ksize, thresh_value, thresh_max_value):
+def preprocessing_img(color_img_path, blur_ksize, dilation_kernel, dilation_iterations, thresh_value, thresh_max_value):
     """
     Returns:
         [color_img, gray_img, thresh_img]
@@ -17,8 +19,9 @@ def preprocessing_img(color_img_path, blur_ksize, thresh_value, thresh_max_value
     gray_img = cv2.GaussianBlur(gray_img, ksize=blur_ksize, sigmaX=0)
     _, thresh_img = cv2.threshold(gray_img, thresh_value, thresh_max_value, cv2.THRESH_BINARY)
 
-    kernel = np.ones((5, 5), np.uint8)
-    dilation_img = cv2.dilate(thresh_img, kernel, iterations=1)
+    dilation_kernel = tuple(map(int, dilation_kernel.split("x")))
+    kernel = np.ones(tuple(dilation_kernel), np.uint8)
+    dilation_img = cv2.dilate(thresh_img, kernel, iterations=dilation_iterations)
     # canny_edges = cv2.Canny(gray_img, canny_threshold1, canny_threshold2)
     return [color_img, gray_img, thresh_img, dilation_img]
 
@@ -101,6 +104,7 @@ def find_hand_contour(color_img, contours, clock_centre):
         x, y, w, h = cv2.boundingRect(contour)
         if ((x + w) > clock_centre[0] > x) and (y < clock_centre[1] < y + h):
             contour_shortlist.append(contour)
+            # yellow rect
             cv2.rectangle(color_img, pt1=(x, y), pt2=(x + w, y + h), color=(0, 255, 255), thickness=3)
             print(f'width = {w} and height = {h}')
     # Min Contour Area = Hand Clock Contour
@@ -113,6 +117,7 @@ def find_hand_contour(color_img, contours, clock_centre):
             contour_min_area = cv2.contourArea(contour)
             hand_contour = contour
     # print(f'Hand contour = {hand_contour}')
+    # Blue contours
     cv2.drawContours(color_img, contours=hand_contour, contourIdx=-1, color=(255, 0, 0), thickness=2)
     return hand_contour
 
