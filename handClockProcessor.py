@@ -175,6 +175,32 @@ def get_angle(color_img, hand, center):
         angle = 3 * np.pi / 2 + np.arctan(abs(dy / dx))
     return angle * 180 / np.pi
 
+def merge_lines(lines, angle_threshold):
+    merged_lines = []
+    sorted_lines = sorted(lines, key=lambda line: np.arctan2(line[1] - line[3], line[0] - line[2]))
+
+    while len(sorted_lines) > 0:
+        line = sorted_lines.pop(0)
+        merged = False
+
+        for i in range(len(merged_lines)):
+            merged_line = merged_lines[i]
+            angle_diff = abs(np.arctan2(line[1] - line[3], line[0] - line[2]) - np.arctan2(merged_line[1] - merged_line[3], merged_line[0] - merged_line[2]))
+
+            if angle_diff < angle_threshold:
+                # Merge the lines by averaging their endpoints
+                merged_line[0] = (merged_line[0] + line[0]) / 2
+                merged_line[1] = (merged_line[1] + line[1]) / 2
+                merged_line[2] = (merged_line[2] + line[2]) / 2
+                merged_line[3] = (merged_line[3] + line[3]) / 2
+                merged = True
+                break
+
+        if not merged:
+            merged_lines.append(line)
+
+    return merged_lines
+
 
 def get_time(color_img, time_hand_vertices, clock_centre):
     """
