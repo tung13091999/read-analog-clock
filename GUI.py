@@ -53,10 +53,13 @@ class ImageDisplay:
 
 
 class ControlPanel:
-    def __init__(self):
+    def __init__(self, window_name, window_size):
         self.root = Tk()
+        self.root.title(window_name)
+        self.root.geometry(window_size)
+        self.root.resizable(False, False)
 
-    def create_tkinter_combobox(self, label_name, state, values, default_value):
+    def add_combobox(self, label_name, state, values, default_value):
         label = Label(self.root, text=label_name)
         label.pack()
         combo = ttk.Combobox(state=state, values=values)
@@ -64,7 +67,7 @@ class ControlPanel:
         combo.pack()
         return combo
 
-    def create_tkinter_slider(self, label_name, start_val, end_val, default_val, orient_val):
+    def add_slider(self, label_name, start_val, end_val, default_val, orient_val):
         label = Label(self.root, text=label_name)
         label.pack()
         scale = Scale(self.root, from_=start_val, to=end_val, orient=orient_val)
@@ -72,8 +75,15 @@ class ControlPanel:
         scale.pack()
         return scale
 
-    def create_button(self, text, command):
+    def add_button(self, text, command):
         button = Button(self.root, text=text, command=command)
         button.pack()
+        self.root.mainloop()
         return button
+
+    def start_window(self):
+        self.root.mainloop()
+
+    def close_window(self):
+        self.root.destroy()
 

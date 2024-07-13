@@ -1,21 +1,18 @@
 import cv2
+import displayImages
 import numpy as np
+import handClockProcessor as hCP
 
-# Đọc ảnh đầu vào và chuyển đổi sang ảnh grayscale
-image = cv2.imread('clock13.png')
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+display = displayImages.ImageDisplay(fig_size=(15, 10))
+color_type = displayImages.ColorType
 
-# Áp dụng phép nhị phân để tách đối tượng nổi bật
-_, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
+color_img = cv2.imread('img_2/09h00m20s.png')
+display.add_img(img_type=color_type.BGR, img=color_img, subplot_pos=231, axis_title='Color img')
+gray_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
+# edges = cv2.Canny(gray_img, 100, 150, apertureSize=3)
+gray_img = cv2.GaussianBlur(gray_img, ksize=(3,3), sigmaX=0)
+_, thresh_img = cv2.threshold(gray_img, 240, 255, cv2.THRESH_BINARY)
+display.add_img(img_type=color_type.GRAY, img=gray_img, subplot_pos=232, axis_title='Color img')
 
-# Tìm các đường viền trong ảnh nhị phân
-contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-# Vẽ đường viền lên ảnh gốc
-cv2.drawContours(image, contours, -1, (0, 255, 0), 2)
-
-# Hiển thị ảnh kết quả
-cv2.imshow('Binary', thresh)
-cv2.imshow('Contours', image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+_, contours = hCP.find_contours(color_img, gray_img)
+display.show()
