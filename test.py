@@ -1,21 +1,19 @@
-import cv2
-import numpy as np
+def split_list_approximate(lst, threshold):
+    sub_lists = []
+    current_sublist = [lst[0]]
 
-# Đọc ảnh đầu vào và chuyển đổi sang ảnh grayscale
-image = cv2.imread('clock13.png')
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    for i in range(1, len(lst)):
+        if abs(lst[i-1] - lst[i]) <= threshold:
+            current_sublist.append(lst[i])
+        else:
+            sub_lists.append(current_sublist)
+            current_sublist = [lst[i]]
+    sub_lists.append(current_sublist)
+    return sub_lists
 
-# Áp dụng phép nhị phân để tách đối tượng nổi bật
-_, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
 
-# Tìm các đường viền trong ảnh nhị phân
-contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+my_list = [1.1, 1.2, 1.3, 2.0, 2.1, 2.2, 3.0, 3.1]
+threshold = 0.2
 
-# Vẽ đường viền lên ảnh gốc
-cv2.drawContours(image, contours, -1, (0, 255, 0), 2)
-
-# Hiển thị ảnh kết quả
-cv2.imshow('Binary', thresh)
-cv2.imshow('Contours', image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+sub_lists = split_list_approximate(my_list, threshold)
+print(sub_lists)

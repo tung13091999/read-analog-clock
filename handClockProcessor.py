@@ -1,5 +1,3 @@
-import string
-
 import cv2
 import numpy as np
 
@@ -175,32 +173,98 @@ def get_angle(color_img, hand, center):
         angle = 3 * np.pi / 2 + np.arctan(abs(dy / dx))
     return angle * 180 / np.pi
 
-def merge_lines(lines, angle_threshold):
-    merged_lines = []
+def distance_to_line(point, line_points):
+    """
+     Calculate distance from a point to a line which have 2 specific points on it
+
+     Input:
+        point--> [x, y]
+        line_points --> [x1, y1, x2, y2]
+
+     Returns:
+         distance
+     """
+    x, y = point
+    x_1, y_1 = line_points[0]
+    x_2, y_2 = line_points[1]
+
+    numerator = abs((y_2 - y_1) * x - (x_2 - x_1) * y + x_2 * y_1 - x_1 * y_2)
+    denominator = np.sqrt((y_2 - y_1) ** 2 + (x_2 - x_1) ** 2)
+    distance = numerator / denominator
+    return distance
+
+def cluster_lines(lines, angle_threshold):
+    """
+    Cluster the lines into specific groups by angle threshold
+    Each group represents for group of HoughP Lines lying on clock hand
+
+    Input:
+        lines --> [x1, y1, x2, y2]
+        angle_threshold --> radian unit
+
+    Returns:
+        clustered_line_groups
+    """
     sorted_lines = sorted(lines, key=lambda line: np.arctan2(line[1] - line[3], line[0] - line[2]))
+    sorted_line_angles = []
+    for line in sorted_lines:
+        angle = np.arctan2(line[1] - line[3], line[0] - line[2])
+        sorted_line_angles.append(angle)
 
-    while len(sorted_lines) > 0:
-        line = sorted_lines.pop(0)
-        merged = False
+    sub_line_lists = []
+    current_line_sublist = [sorted_lines[0]]
 
-        for i in range(len(merged_lines)):
-            merged_line = merged_lines[i]
-            angle_diff = abs(np.arctan2(line[1] - line[3], line[0] - line[2]) - np.arctan2(merged_line[1] - merged_line[3], merged_line[0] - merged_line[2]))
+    sub_angle_lists = []
+    current_angle_sublist = [sorted_line_angles[0]]
 
-            if angle_diff < angle_threshold:
-                # Merge the lines by averaging their endpoints
-                merged_line[0] = (merged_line[0] + line[0]) / 2
-                merged_line[1] = (merged_line[1] + line[1]) / 2
-                merged_line[2] = (merged_line[2] + line[2]) / 2
-                merged_line[3] = (merged_line[3] + line[3]) / 2
-                merged = True
-                break
+    for i in range(1, len(lines)):
+        if abs(sorted_line_angles[i - 1] - sorted_line_angles[i]) <= angle_threshold:
+            current_angle_sublist.append(sorted_line_angles[i])
+            current_line_sublist.append(sorted_lines[i])
+        else:
+            sub_angle_lists.append(current_angle_sublist)
+            current_angle_sublist = [sorted_line_angles[i]]
+            sub_line_lists.append(current_line_sublist)
+            current_line_sublist = [sorted_lines[i]]
 
-        if not merged:
-            merged_lines.append(line)
+    sub_angle_lists.append(current_angle_sublist)
+    sub_line_lists.append(current_line_sublist)
+    return sub_line_lists
 
-    return merged_lines
+def find_max_points(clustered_line_groups, clock_centre):
+    """
+    Find the max point in each clustered_line_group
+    Each max point represents for a vertex of clock hand
 
+    Input:
+        clustered_line_groups --> [[line1, line2, line3], [line4, line5] ,[line n, line n +1 ]
+        angle_threshold --> radian unit
+
+    Returns:
+        clustered_line_groups
+    """
+    max_points = []
+    for group in clustered_line_groups:
+        max_length = 0
+        point = [0, 0]
+        for line in group:
+            x1 = line[0]
+            y1 = line[1]
+            x2 = line[2]
+            y2 = line[3]
+
+            length_1 = np.sqrt((x1 - clock_centre[0]) ** 2 + (y1 - clock_centre[1]) ** 2)
+            length_2 = np.sqrt((x2 - clock_centre[0]) ** 2 + (y2 - clock_centre[1]) ** 2)
+
+            if length_1 >= length_2 and length_1 >= max_length:
+                max_length = length_1
+                point[0] = x1
+                point[1] = y1
+            if length_2 >= length_1 and length_2 >= max_length:
+                max_length = length_2
+                point[0] = x2
+                point[1] = y2
+        max_points.append(point)
 
 def get_time(color_img, time_hand_vertices, clock_centre):
     """
