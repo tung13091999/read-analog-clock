@@ -18,7 +18,7 @@ def distance_to_line(point, line_points):
     return distance
 
 
-color_img = cv2.imread('img_2/09h00m20s.png')
+color_img = cv2.imread('clock5.jpg  ')
 display.add_img(img_type=color_type.BGR, img=color_img, subplot_pos=231, axis_title='Color img')
 gray_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
 # edges = cv2.Canny(gray_img, 100, 150, apertureSize=3)
